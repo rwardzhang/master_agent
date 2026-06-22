@@ -21,6 +21,7 @@
 
 import json
 import os
+import re
 import argparse
 import pandas as pd
 
@@ -58,22 +59,49 @@ VALID_LABELS = {
     "sights", "video", "car_control",
 }
 
-def build_sample(query: str, label: str) -> dict:
-    """
-    构造单条 OpenAI 训练样本：
-        [
-            {"role": "system",    "content": SYSTEM_PROMPT},
-            {"role": "user",     "content": <query 原文，保留 user:/assistant: 及 \n>},
-            {"role": "assistant","content": <label>}
-        ]
+# 用于切分多轮对话的正则：匹配行首 user: / assistant:
+# 每段开头的 "user:" 或 "assistant:" 作为分隔标记
+ROLE_PATTERN = re.compile(r"(?:^|\n)(user|assistant)\s*[:：]\s*", re.IGNORECASE)
 
-    注意：不再将多轮对话拆分成多条 message，整段 query 作为一条 user 的 content。
+
+def parse_query_to_turns(query: str) -> list:
     """
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": query},
-        {"role": "assistant", "content": label},
-    ]
+    将 query 字段解析为多轮对话 messages（不含 system / 末尾 label）
+
+    规则：
+    - 以 "user:" / "assistant:" 作为 role 分隔标记
+    - 每段 role 对应的内容作为该消息的 content
+    - 保留 "assistant:..." 这种历史助手回复占位（content 为 "..."）
+
+    返回：[{"role": "user"|"assistant", "content": "..."}]
+    """
+    if not query:
+        return []
+
+    # 找到所有 role 标记的位置
+    matches = list(ROLE_PATTERN.finditer(query))
+    if not matches:
+        # 没找到任何标记，整段当成一句 user
+        return [{"role": "user", "content": query.strip()}]
+
+    turns = []
+    for i, m in enumerate(matches):
+        role = m.group(1).lower()
+        start = m.end()
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(query)
+        content = query[start:end].strip()
+        if not content:
+            continue
+        turns.append({"role": role, "content": content})
+
+    return turns
+
+
+def build_sample(query: str, label: str) -> dict:
+    """构造单条 OpenAI 训练样本（system + 多轮对话 + 末尾 assistant label）"""
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    messages.extend(parse_query_to_turns(query))
+    messages.append({"role": "assistant", "content": label})
     return {"messages": messages}
 
 
@@ -120,6 +148,13 @@ def parse_sheet(xls: pd.ExcelFile, sheet_name: str) -> tuple:
             continue
 
         sample = build_sample(query, label)
+
+        # 校验：messages 至少包含 system + 1 条 user + 末尾 assistant label
+        # 即至少 3 条；若 query 解析失败导致只有 system + label，则跳过
+        if len(sample["messages"]) < 3:
+            skipped += 1
+            continue
+
         samples.append(sample)
 
     return samples, skipped
@@ -146,9 +181,8 @@ def convert(input_xlsx: str, output_jsonl: str) -> None:
                 fout.write(json.dumps(s, ensure_ascii=False) + "\n")
                 lbl = s["messages"][-1]["content"]
                 label_counter[lbl] = label_counter.get(lbl, 0) + 1
-                # query 中出现 "assistant:" 即视为多轮
-                user_content = s["messages"][1]["content"]
-                if "assistant:" in user_content or "assistant：" in user_content:
+                # 除去 system 与末尾 label，剩下 > 1 条则为多轮
+                if len(s["messages"]) - 2 > 1:
                     multi_turn_counter += 1
             total += len(samples)
             print(f"  ✅ {sheet_name}: 写入 {len(samples)} 条，跳过 {skipped} 条")

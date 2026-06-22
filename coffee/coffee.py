@@ -50,15 +50,9 @@ VALID_LABELS = {"meituan", "luckin", "starbucks", "clarify", "whatever", "termin
 
 
 def build_sample(query: str, label: str) -> dict:
-    """
-    构造单条 OpenAI 训练样本：
-        [
-            {"role": "system",    "content": SYSTEM_PROMPT},
-            {"role": "user",     "content": <query 原文，保留 user:/assistant: 及 \n>},
-            {"role": "assistant","content": <label>}
-        ]
+    """构造单条 OpenAI 训练样本（固定 3 条 message：system + user 整段 query 原样 + assistant label）
 
-    注意：不再将多轮对话拆分成多条 message，整段 query 作为一条 user 的 content。
+    query 字段保持原样（可能含 "user:..\\nassistant:..\\nuser:.."），直接作为 user content。
     """
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -110,8 +104,7 @@ def parse_sheet(xls: pd.ExcelFile, sheet_name: str) -> tuple:
             skipped += 1
             continue
 
-        sample = build_sample(query, label)
-        samples.append(sample)
+        samples.append(build_sample(query, label))
 
     return samples, skipped
 
@@ -137,9 +130,8 @@ def convert(input_xlsx: str, output_jsonl: str) -> None:
                 fout.write(json.dumps(s, ensure_ascii=False) + "\n")
                 lbl = s["messages"][-1]["content"]
                 label_counter[lbl] = label_counter.get(lbl, 0) + 1
-                # query 中出现 "assistant:" 即视为多轮
-                user_content = s["messages"][1]["content"]
-                if "assistant:" in user_content or "assistant：" in user_content:
+                # user content 中含 "assistant:" 视为多轮
+                if "assistant:" in s["messages"][1]["content"]:
                     multi_turn_counter += 1
             total += len(samples)
             print(f"  ✅ {sheet_name}: 写入 {len(samples)} 条，跳过 {skipped} 条")
@@ -157,12 +149,12 @@ def main():
     parser = argparse.ArgumentParser(description="将 coffee.xlsx 转换为 OpenAI 训练样本 jsonl 格式（meituan / luckin / starbucks / clarify / whatever / terminate / other 七分类）")
     parser.add_argument(
         "--input", "-i",
-        default="/Users/rwardzhang/PycharmProjects/master_agent_qc/coffee/coffee.xlsx",
+        default="/Users/rwardzhang/PycharmProjects/master_agent_qc/coffee/coffee_622.xlsx",
         help="输入的 xlsx 文件路径"
     )
     parser.add_argument(
         "--output", "-o",
-        default="/Users/rwardzhang/PycharmProjects/master_agent_qc/coffee/coffee_train.jsonl",
+        default="/Users/rwardzhang/PycharmProjects/master_agent_qc/coffee/coffee_622.jsonl",
         help="输出的 jsonl 文件路径"
     )
     args = parser.parse_args()
