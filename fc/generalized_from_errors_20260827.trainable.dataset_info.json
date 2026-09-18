@@ -1,0 +1,16 @@
+{
+  "generalized_from_errors_20260827.trainable": {
+    "file_name": "/Users/rwardzhang/PycharmProjects/master_agent_qc/fc/generalized_from_errors_20260827.trainable.jsonl",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant",
+      "system_tag": "system"
+    }
+  }
+}

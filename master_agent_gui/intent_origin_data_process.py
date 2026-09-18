@@ -116,7 +116,7 @@ def train_and_test(df, test_size, file_path, train_name, test_name):
 if __name__ == "__main__":
 
   file_path='./'
-  file_name = 'gui0519.xlsx'
+  file_name = 'gui_914.xlsx'
   
   # 获取Excel文件中的所有sheet名称curl -X POST "http://21.175.63.185:8187/v1/chat/completions" \
   #   -H "Content-Type: application/json" \

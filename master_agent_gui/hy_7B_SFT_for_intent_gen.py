@@ -90,7 +90,9 @@ def get_origin_file(file_name, column_names, sample=False) -> List[Dict]:
 intent_class_map = {'coffee': 'coffee',
                     'unknown': 'unknown',
                     'milk_tea':'milk_tea',
-                    'burger':'burger'
+                    'burger':'burger',
+                    'order':'order',
+                    'ticket':'ticket'
                     }
 class_intent_map = {value: key for key, value in intent_class_map.items()}
 
@@ -100,15 +102,19 @@ def get_intent_prompt1(query) -> str:
     
     {
       "agent_name": "coffee",
-      "description": "你是一个专业的点单助手，支持完整的点单流程，仅支持帮助用户购买咖啡如：瑞幸咖啡等"
+      "description": "你是一个专业的咖啡点单助手，支持完整的咖啡点单流程，仅支持帮助用户购买咖啡如：瑞幸、星巴克等"
     }，
     {
-      "agent_name": "milk_tea",
-      "description": "你是一个专业的奶茶点单助手，支持完整的点单流程，仅支持帮助用户购买奶茶如：奶茶,购买奶茶等"
-    }，
+      "agent_name": "order",
+      "description": "你是一个订单查询助手，负责查询用户【已下单】的各类订单状态与信息，但不包含机票查询，不执行任何新的下单操作。覆盖：外卖配送进度、景点门票/火车票/酒店预订、电影票/演唱会票、餐厅排队取号进度与订座信息的查询。典型：查一下我的外卖到哪了、我买的火车票几点发车、酒店哪天入住、我的号排到第几桌了、订的电影票几点开场"
+    },
     {
-      "agent_name": "burger",
-      "description": "你是一个专业的汉堡点单助手，支持完整的点单流程，仅支持帮助用户购买汉堡如：汉堡,购买汉堡等"
+      "agent_name": "fast_food",
+      "description": "你是一个快餐点单助手，负责帮助用户下单快餐，支持完整的点单流程，仅支持帮助用户购买快餐如：肯德基、麦当劳等快餐"
+    },
+    {
+      "agent_name": "ticket",
+      "description": "你是一个机票查询助手，负责帮助用户查询行程、飞机票、机场、机票订单相关信息等"
     },
     {
       "agent_name": "unknown",
@@ -197,7 +203,7 @@ if __name__ == "__main__":
 
     prompt_type = 1
     train_name = 'intent_train_v1.csv'
-    train_save_name = 'intent_train_v1_hy_gen_category519.jsonl'
+    train_save_name = 'intent_train_v1_hy_gen_category_914.jsonl'
 
     if args.task_type == 'data':
         print(

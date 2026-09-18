@@ -113,7 +113,7 @@ def train_and_test(df, test_size, file_path, train_name, test_name):
 if __name__ == "__main__":
 
   file_path='./'
-  file_name = 'master_agent_0617.xlsx'
+  file_name = 'master_agent_intent_0717.xlsx'
   
   # 获取Excel文件中的所有sheet名称
   excel_file = pd.ExcelFile(os.path.join(file_path, file_name), engine='openpyxl')

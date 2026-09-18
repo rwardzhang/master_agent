@@ -140,7 +140,7 @@ def get_intent_prompt1(query) -> str:
     },
     {
       "agent_name": "travel_plan",
-      "description": "你是一个非常善于进行旅游规划、出游推荐、地图导航的AI助手，输入示例：规划武汉一日游、春天有什么好玩的去处、导航去东湖绿道、导航去第一个"
+      "description": "你是一个非常善于出游推荐、地图导航的AI助手，输入示例：规划武汉一日游、春天有什么好玩的去处、导航去东湖绿道、导航去第一个"
     },
     {
       "agent_name": "video",
@@ -160,7 +160,7 @@ def get_intent_prompt1(query) -> str:
     },
     {
       "agent_name": "tc_travel",
-      "description": "你是一个专业的同程旅酒店预订助手，能够根据用户需求打开同程小程序帮助用户预定酒店、飞机票、火车票、购买景点门票等"
+      "description": "你是一个专业的同程旅行预订助手，能够根据用户需求打开同程小程序帮助用户预定酒店、飞机票、火车票、购买景点门票等"
     },
     {
       "agent_name": "sights",
@@ -256,7 +256,7 @@ if __name__ == "__main__":
 
   prompt_type = 1
   train_name = 'intent_train_v1.csv'
-  train_save_name = 'intent_train_v1_hy_gen_0617.jsonl'
+  train_save_name = 'intent_train_v1_hy_gen_0717.jsonl'
   test_name = 'intent_test_v1.csv'
   test_save_name = 'intent_test_v1_hy_gen.jsonl'
 

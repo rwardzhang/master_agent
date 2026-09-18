@@ -21,45 +21,135 @@
 
 import json
 import os
+import re
 import argparse
 import pandas as pd
 
 
 # 咖啡场景七分类（meituan / luckin / starbucks / clarify / whatever / terminate / other）专用 system prompt
-SYSTEM_PROMPT = (
-    "你是点单品类下的品牌与服务平台意图分类助手。请结合用户输入和最近上下文，"
-    "判断用户当前关于点咖啡诉求的核心意图，并从下列结果中选择一个最匹配结果：\n\n"
-    "分类定义：\n"
-    "    luckin：用户明确说使用瑞幸小程序，或者没有明确说使用哪种小程序但要买瑞幸独有商品；"
-    "瑞幸小程序只支持到店自取，如果表达要外卖、外送、配送或送到某地，不能输出 luckin。"
-    "瑞幸独有品名关键字包括：生椰、橙C、苹果C、柚C、小黄油、厚乳、陨石。\n"
-    "    starbucks：用户明确说使用星巴克小程序，或者没有明确说使用哪种小程序但要买星巴克独有商品；"
-    "星巴克小程序只支持到店自取，如果表达要外卖、外送、配送或送到某地，不能输出 starbucks。"
-    "星巴克独有品名关键字包括：星冰、星冰乐、焦糖玛奇朵、馥芮白、冰震浓缩。\n"
-    "    meituan：用户意图包含外卖、外送、配送、送到某地等需要配送的服务意图，表示使用美团小程序；"
-    "如果用户明确说了咖啡品牌，但该品牌不是瑞幸或星巴克，也输出 meituan。\n"
-    "    clarify：用户的点咖啡诉求可以在瑞幸和星巴克完成，且用户没有表达品牌、小程序或平台偏好，"
-    "需要继续询问使用星巴克还是瑞幸。\n"
-    "    whatever：用户明确表达\"都可以、随便、听你的、你决定、无所谓\"等无偏好含义。\n"
-    "    terminate：用户明确表达不想点了、取消点单、算了等停止点单含义，且没有其他需要继续处理的核心意图。\n"
-    "    other：不属于上述场景，或者当前核心意图不是点咖啡。\n\n"
-)
+SYSTEM_PROMPT = """你是「点单与订单查询」场景的意图分类器。你的任务是根据用户的当前输入（以及可能的对话上下文），判断用户当前的核心意图，输出唯一一个标签。
+
+【可服务范围】
+每个服务域后的括号内为该域可落地的品牌/平台，点单与查订单同样适用：
+    - 咖啡（瑞幸、星巴克）：咖啡、奶咖、饮品。
+        · 瑞幸独有商品：生椰、橙C、苹果C、柚C、小黄油、厚乳、陨石。
+        · 星巴克独有商品：星冰、星冰乐、焦糖玛奇朵、馥芮白、冰震浓缩。
+    - 外卖配送（美团）：点外卖、外送、配送、送到某地、以及奶茶、茶饮、果茶等
+    - 出行（同程）：火车票、高铁、机票、酒店、汽车票、旅游出行。
+    - 娱乐票务（猫眼）：电影票、演出票、演唱会、话剧、音乐剧。
+    - 排队（美味不用等）：餐厅排队、取号、等位、排号。
+
+【标签含义】
+    precise：能唯一确定一个品牌/平台。
+    clarify：诉求落在可服务范围内，但定位不到唯一品牌/平台，需要追问。
+    whatever：明确表达无偏好（都行、随便、听你的、你定、无所谓）。
+    terminate：明确表达终止当前事项（不弄了、取消、算了不用了），且没有其它待办诉求。
+    other：当前核心意图在可服务范围之外。
+
+【判定步骤】（自上而下，命中即停）
+    1. 当前句表达的是服务范围之外的功能诉求（如放音乐、导航、问天气、闲聊）→ other；即使上文在点单，只要当前句已转向范围外诉求，也按此判断。
+    2. 当前句明确表示终止且没有其它诉求 → terminate；若在终止的同时又提出范围内的新诉求，则忽略终止、按新诉求继续判断。
+    3. 当前句明确表达无偏好 → whatever（这类回应通常出现在系统已追问品牌/平台之后）。
+    4. 能唯一锁定一个品牌/平台 → precise，满足任一即可：
+        · 直接说出品牌/平台名；
+        · 命中某品牌独有商品（需整句读音对应地完整命中，仅个别字相同或口味相近不算命中）；
+        · 诉求落在仅含唯一品牌/平台的服务域（外卖配送 / 出行 / 娱乐票务 / 排队）。
+    5. 落在可服务范围内但锁不到唯一品牌/平台 → clarify：
+        · 咖啡仅说“咖啡 / 拿铁 / 美式 / 咖啡订单”等通用词、未指明瑞幸或星巴克（点单或查订单都一样）；
+        · 通用动作词跨域，如“买票”可能是出行或娱乐票务，未指定平台的“查订单”可能是任一域。
+
+【补充规则】
+    - 当前这句话优先于上下文；仅当当前句缺少关键线索时，才用上下文补全。
+    - 语音转写可能有同音/近音错别字，整句读音明显指向某品牌、平台或服务词时，按正确含义理解。
+【输出要求】
+    仅输出 precise、clarify、whatever、terminate、other 其中之一，不带任何解释、标点或换行。"""
 
 # 合法的意图标签集合（咖啡场景 7 类）
-VALID_LABELS = {"meituan", "luckin", "starbucks", "clarify", "whatever", "terminate", "other"}
+VALID_LABELS = {"precise","clarify", "whatever", "terminate", "other"}
+
+# 用于切分多轮对话的正则：匹配行首 user: / assistant:
+ROLE_PATTERN = re.compile(r"(?:^|\n)(user|assistant)\s*[:：]\s*", re.IGNORECASE)
+
+# 用于检查 query 是否以 user: / assistant: 开头（允许前置空白）
+ROLE_PREFIX_PATTERN = re.compile(r"^\s*(user|assistant)\s*[:：]", re.IGNORECASE)
 
 
-def build_sample(query: str, label: str) -> dict:
-    """构造单条 OpenAI 训练样本（固定 3 条 message：system + user 整段 query 原样 + assistant label）
+def ensure_user_prefix(query: str) -> tuple:
+    """确保 query 带有 role 前缀。
 
-    query 字段保持原样（可能含 "user:..\\nassistant:..\\nuser:.."），直接作为 user content。
+    规则：
+    - 若 query 已经以 "user:" / "assistant:" 开头（中英文冒号均可），原样返回
+    - 否则在最前面补一个 "user:" 前缀
+
+    返回 (new_query, fixed)，fixed 为 True 表示进行了补全
     """
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": query},
-        {"role": "assistant", "content": label},
-    ]
-    return {"messages": messages}
+    if not query:
+        return query, False
+    if ROLE_PREFIX_PATTERN.match(query):
+        return query, False
+    return "user:" + query, True
+
+
+def parse_query_to_turns(query: str) -> list:
+    """
+    将 query 字段解析为多轮对话 messages（不含 system / 末尾 label）
+
+    规则：
+    - 以 "user:" / "assistant:" 作为 role 分隔标记
+    - 每段 role 对应的内容作为该消息的 content
+    - 保留 "assistant:..." 这种历史助手回复占位（content 为 "..."）
+    """
+    if not query:
+        return []
+
+    matches = list(ROLE_PATTERN.finditer(query))
+    if not matches:
+        return [{"role": "user", "content": query.strip()}]
+
+    turns = []
+    for i, m in enumerate(matches):
+        role = m.group(1).lower()
+        start = m.end()
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(query)
+        content = query[start:end].strip()
+        if not content:
+            continue
+        turns.append({"role": role, "content": content})
+
+    return turns
+
+
+def build_sample(query: str, label: str) -> tuple:
+    """构造单条 OpenAI 训练样本（多轮 messages 格式）
+
+    样本结构：
+        [
+          {"role": "system",    "content": SYSTEM_PROMPT},
+          {"role": "user",      "content": "..."},
+          {"role": "assistant", "content": "..."},   # 历史助手回复占位（如 "..."）
+          {"role": "user",      "content": "..."},
+          ...
+          {"role": "assistant", "content": label},   # 末尾 assistant 输出意图标签
+        ]
+
+    说明：
+    - query 中 "user:xxx\\nassistant:...\\nuser:yyy" 这样的多轮上下文会被拆分为
+      多条 user / assistant messages
+    - 写入 jsonl 前会检查 query 是否带有 user:/assistant: 前缀，没有则自动补 user:
+    - 末尾固定追加一条 {"role": "assistant", "content": label}
+
+    返回 (sample, fixed)，fixed=True 表示本条进行了 user: 前缀补全。
+    """
+    content = query.strip()
+    content, fixed = ensure_user_prefix(content)
+
+    turns = parse_query_to_turns(content)
+
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    messages.extend(turns)
+    messages.append({"role": "assistant", "content": label})
+
+    return {"messages": messages}, fixed
 
 
 def parse_sheet(xls: pd.ExcelFile, sheet_name: str) -> tuple:
@@ -82,6 +172,7 @@ def parse_sheet(xls: pd.ExcelFile, sheet_name: str) -> tuple:
 
     samples = []
     skipped = 0
+    fixed_prefix_count = 0  # 统计 jsonl 写入时被补 'user:' 前缀的条数
     for _, row in df.iterrows():
         query = row["query"]
         label = row["intent"]
@@ -104,7 +195,20 @@ def parse_sheet(xls: pd.ExcelFile, sheet_name: str) -> tuple:
             skipped += 1
             continue
 
-        samples.append(build_sample(query, label))
+        # 生成训练样本；在 build_sample 内部会检查并补上 'user:' 前缀
+        sample, fixed = build_sample(query, label)
+        if fixed:
+            fixed_prefix_count += 1
+
+        # 校验：messages 至少包含 system + 1 条 user + 末尾 assistant label
+        if len(sample["messages"]) < 3:
+            skipped += 1
+            continue
+
+        samples.append(sample)
+
+    if fixed_prefix_count > 0:
+        print(f"  🛠️  Sheet [{sheet_name}] 写入 jsonl 时为 {fixed_prefix_count} 条 query 补上了 'user:' 前缀")
 
     return samples, skipped
 
@@ -130,8 +234,8 @@ def convert(input_xlsx: str, output_jsonl: str) -> None:
                 fout.write(json.dumps(s, ensure_ascii=False) + "\n")
                 lbl = s["messages"][-1]["content"]
                 label_counter[lbl] = label_counter.get(lbl, 0) + 1
-                # user content 中含 "assistant:" 视为多轮
-                if "assistant:" in s["messages"][1]["content"]:
+                # 中间消息（去掉首条 system 与末尾 assistant 标签）大于 1 条则为多轮
+                if len(s["messages"]) - 2 > 1:
                     multi_turn_counter += 1
             total += len(samples)
             print(f"  ✅ {sheet_name}: 写入 {len(samples)} 条，跳过 {skipped} 条")
@@ -149,12 +253,12 @@ def main():
     parser = argparse.ArgumentParser(description="将 coffee.xlsx 转换为 OpenAI 训练样本 jsonl 格式（meituan / luckin / starbucks / clarify / whatever / terminate / other 七分类）")
     parser.add_argument(
         "--input", "-i",
-        default="/Users/rwardzhang/PycharmProjects/master_agent_qc/coffee/coffee_622.xlsx",
+        default="/Users/rwardzhang/PycharmProjects/master_agent_qc/coffee/coffee_order_0728.xlsx",
         help="输入的 xlsx 文件路径"
     )
     parser.add_argument(
         "--output", "-o",
-        default="/Users/rwardzhang/PycharmProjects/master_agent_qc/coffee/coffee_622.jsonl",
+        default="/Users/rwardzhang/PycharmProjects/master_agent_qc/coffee/coffee_order_0728.jsonl",
         help="输出的 jsonl 文件路径"
     )
     args = parser.parse_args()

@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>意图分类模型评测报告</title>
+<style>
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin:0; font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif; background:#0d1117; color:#e6edf3; }
+.wrap { max-width:1280px; margin:0 auto; padding:32px 24px 64px; }
+h1 { margin:0 0 6px; font-size:26px; }
+h2 { margin:36px 0 14px; font-size:19px; border-left:4px solid #3fb950; padding-left:10px; }
+.muted { color:#8b949e; font-size:13px; margin:0 0 4px; }
+.cards { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin:22px 0; }
+.card { background:#161b22; border:1px solid #30363d; border-radius:12px; padding:16px; text-align:center; }
+.card .lab { color:#8b949e; font-size:12px; }
+.card .num { font-size:26px; font-weight:700; margin-top:8px; }
+.card .num.acc { color:#3fb950; }
+.card .num.f1 { color:#58a6ff; }
+.card .sub { color:#8b949e; font-size:11px; margin-top:2px; }
+table { border-collapse:collapse; background:#161b22; }
+.matrix-wrap { overflow-x:auto; border:1px solid #30363d; border-radius:12px; padding:8px; }
+.matrix { font-size:12px; }
+.matrix th, .matrix td { border:1px solid #22272e; padding:0; text-align:center; }
+.matrix td { width:38px; height:34px; }
+.matrix .corner { background:#1f2630; color:#8b949e; font-size:11px; padding:4px 6px; white-space:nowrap; position:sticky; left:0; z-index:2; }
+.matrix .rowlab { background:#1f2630; color:#c9d1d9; padding:0 8px; text-align:right; white-space:nowrap; position:sticky; left:0; z-index:1; font-weight:600; }
+.matrix th.rot { background:#1f2630; height:96px; vertical-align:bottom; padding-bottom:6px; }
+.matrix th.rot div { writing-mode:vertical-rl; transform:rotate(180deg); margin:0 auto; color:#c9d1d9; font-weight:600; white-space:nowrap; }
+.legend { display:flex; gap:18px; align-items:center; margin:10px 2px 0; font-size:12px; color:#8b949e; }
+.legend .sw { display:inline-block; width:14px; height:14px; border-radius:3px; margin-right:5px; vertical-align:-2px; }
+.tbl { width:100%; border:1px solid #30363d; border-radius:12px; overflow:hidden; }
+.tbl th, .tbl td { border-bottom:1px solid #22272e; padding:9px 12px; font-size:13px; text-align:left; vertical-align:middle; }
+.tbl th { background:#1f2630; color:#c9d1d9; }
+.tbl tr.weak { background:rgba(240,90,60,0.06); }
+.lname { font-family: ui-monospace, Menlo, monospace; color:#58a6ff; }
+.lname.pred { color:#f0883e; }
+.barbg { position:relative; background:#22272e; border-radius:6px; height:20px; min-width:150px; }
+.bar { height:100%; border-radius:6px; }
+.bar.p { background:#58a6ff; }
+.bar.r { background:#bc8cff; }
+.bar.f { background:#3fb950; }
+.bar.c { background:#f0883e; }
+.barval { position:absolute; right:8px; top:0; line-height:20px; font-size:11px; color:#e6edf3; }
+.arrow { color:#8b949e; text-align:center; }
+.q { color:#c9d1d9; }
+.two { display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; }
+@media(max-width:900px){ .cards{grid-template-columns:repeat(2,1fr);} .two{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>意图分类模型评测报告</h1>
+  <p class="muted">模型：zc-intent&nbsp;·&nbsp;测试集：test.jsonl&nbsp;·&nbsp;8500 条&nbsp;·&nbsp;17 个标签</p>
+  
+    <div class="cards">
+      <div class="card"><div class="lab">样本总数</div><div class="num">8500</div></div>
+      <div class="card"><div class="lab">整体准确率</div><div class="num acc">93.26%</div><div class="sub">7927/8500</div></div>
+      <div class="card"><div class="lab">Macro-Precision</div><div class="num">0.9508</div></div>
+      <div class="card"><div class="lab">Macro-Recall</div><div class="num">0.9326</div></div>
+      <div class="card"><div class="lab">Macro-F1</div><div class="num f1">0.9361</div></div>
+    </div>
+
+  <h2>混淆矩阵热力图</h2>
+  <p class="muted">行 = 真实标签，列 = 预测标签。对角线（绿色）为正确，非对角（橙红）为混淆，颜色深浅按该行占比。</p>
+  
+    <div class="matrix-wrap">
+      <table class="matrix">
+        <thead><tr><th class="corner">真实\预测</th><th class="rot"><div>car_control</div></th><th class="rot"><div>chat</div></th><th class="rot"><div>food</div></th><th class="rot"><div>luckin</div></th><th class="rot"><div>maoyan</div></th><th class="rot"><div>meituan</div></th><th class="rot"><div>miniprogram</div></th><th class="rot"><div>music</div></th><th class="rot"><div>news</div></th><th class="rot"><div>podcast</div></th><th class="rot"><div>puscene</div></th><th class="rot"><div>retail</div></th><th class="rot"><div>sights</div></th><th class="rot"><div>starbucks</div></th><th class="rot"><div>tc_travel</div></th><th class="rot"><div>travel_plan</div></th><th class="rot"><div>video</div></th><th class="rot"><div>__invalid__</div></th></tr></thead>
+        <tbody><tr><th class="rowlab">car_control</th><td style="background:rgba(63,185,80,0.963);color:#e6edf3;font-weight:600;" title="真实 car_control → 预测 car_control: 478">478</td><td style="background:transparent;color:#3a4150;" title="真实 car_control → 预测 chat: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 car_control → 预测 food: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 car_control → 预测 luckin: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 car_control → 预测 maoyan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 car_control → 预测 meituan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 car_control → 预测 miniprogram: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 car_control → 预测 music: 0"></td><td style="background:rgba(240,90,60,0.236);color:#e6edf3;" title="真实 car_control → 预测 news: 22">22</td><td style="background:transparent;color:#3a4150;" title="真实 car_control → 预测 podcast: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 car_control → 预测 puscene: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 car_control → 预测 retail: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 car_control → 预测 sights: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 car_control → 预测 starbucks: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 car_control → 预测 tc_travel: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 car_control → 预测 travel_plan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 car_control → 预测 video: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 car_control → 预测 __invalid__: 0"></td></tr><tr><th class="rowlab">chat</th><td style="background:transparent;color:#3a4150;" title="真实 chat → 预测 car_control: 0"></td><td style="background:rgba(63,185,80,0.779);color:#e6edf3;font-weight:600;" title="真实 chat → 预测 chat: 370">370</td><td style="background:transparent;color:#3a4150;" title="真实 chat → 预测 food: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 chat → 预测 luckin: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 chat → 预测 maoyan: 0"></td><td style="background:rgba(240,90,60,0.146);color:#e6edf3;" title="真实 chat → 预测 meituan: 5">5</td><td style="background:transparent;color:#3a4150;" title="真实 chat → 预测 miniprogram: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 chat → 预测 music: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 chat → 预测 news: 0"></td><td style="background:rgba(240,90,60,0.131);color:#e6edf3;" title="真实 chat → 预测 podcast: 2">2</td><td style="background:transparent;color:#3a4150;" title="真实 chat → 预测 puscene: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 chat → 预测 retail: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 chat → 预测 sights: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 chat → 预测 starbucks: 0"></td><td style="background:rgba(240,90,60,0.131);color:#e6edf3;" title="真实 chat → 预测 tc_travel: 2">2</td><td style="background:rgba(240,90,60,0.490);color:#e6edf3;" title="真实 chat → 预测 travel_plan: 70">70</td><td style="background:transparent;color:#3a4150;" title="真实 chat → 预测 video: 0"></td><td style="background:rgba(240,90,60,0.389);color:#e6edf3;" title="真实 chat → 预测 __invalid__: 51">51</td></tr><tr><th class="rowlab">food</th><td style="background:transparent;color:#3a4150;" title="真实 food → 预测 car_control: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 food → 预测 chat: 0"></td><td style="background:rgba(63,185,80,0.993);color:#e6edf3;font-weight:600;" title="真实 food → 预测 food: 496">496</td><td style="background:transparent;color:#3a4150;" title="真实 food → 预测 luckin: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 food → 预测 maoyan: 0"></td><td style="background:rgba(240,90,60,0.125);color:#e6edf3;" title="真实 food → 预测 meituan: 1">1</td><td style="background:transparent;color:#3a4150;" title="真实 food → 预测 miniprogram: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 food → 预测 music: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 food → 预测 news: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 food → 预测 podcast: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 food → 预测 puscene: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 food → 预测 retail: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 food → 预测 sights: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 food → 预测 starbucks: 0"></td><td style="background:rgba(240,90,60,0.125);color:#e6edf3;" title="真实 food → 预测 tc_travel: 1">1</td><td style="background:rgba(240,90,60,0.131);color:#e6edf3;" title="真实 food → 预测 travel_plan: 2">2</td><td style="background:transparent;color:#3a4150;" title="真实 food → 预测 video: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 food → 预测 __invalid__: 0"></td></tr><tr><th class="rowlab">luckin</th><td style="background:transparent;color:#3a4150;" title="真实 luckin → 预测 car_control: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 luckin → 预测 chat: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 luckin → 预测 food: 0"></td><td style="background:rgba(63,185,80,1.000);color:#e6edf3;font-weight:600;" title="真实 luckin → 预测 luckin: 500">500</td><td style="background:transparent;color:#3a4150;" title="真实 luckin → 预测 maoyan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 luckin → 预测 meituan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 luckin → 预测 miniprogram: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 luckin → 预测 music: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 luckin → 预测 news: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 luckin → 预测 podcast: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 luckin → 预测 puscene: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 luckin → 预测 retail: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 luckin → 预测 sights: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 luckin → 预测 starbucks: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 luckin → 预测 tc_travel: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 luckin → 预测 travel_plan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 luckin → 预测 video: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 luckin → 预测 __invalid__: 0"></td></tr><tr><th class="rowlab">maoyan</th><td style="background:transparent;color:#3a4150;" title="真实 maoyan → 预测 car_control: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 maoyan → 预测 chat: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 maoyan → 预测 food: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 maoyan → 预测 luckin: 0"></td><td style="background:rgba(63,185,80,0.990);color:#e6edf3;font-weight:600;" title="真实 maoyan → 预测 maoyan: 494">494</td><td style="background:transparent;color:#3a4150;" title="真实 maoyan → 预测 meituan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 maoyan → 预测 miniprogram: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 maoyan → 预测 music: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 maoyan → 预测 news: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 maoyan → 预测 podcast: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 maoyan → 预测 puscene: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 maoyan → 预测 retail: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 maoyan → 预测 sights: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 maoyan → 预测 starbucks: 0"></td><td style="background:rgba(240,90,60,0.152);color:#e6edf3;" title="真实 maoyan → 预测 tc_travel: 6">6</td><td style="background:transparent;color:#3a4150;" title="真实 maoyan → 预测 travel_plan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 maoyan → 预测 video: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 maoyan → 预测 __invalid__: 0"></td></tr><tr><th class="rowlab">meituan</th><td style="background:transparent;color:#3a4150;" title="真实 meituan → 预测 car_control: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 meituan → 预测 chat: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 meituan → 预测 food: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 meituan → 预测 luckin: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 meituan → 预测 maoyan: 0"></td><td style="background:rgba(63,185,80,1.000);color:#e6edf3;font-weight:600;" title="真实 meituan → 预测 meituan: 500">500</td><td style="background:transparent;color:#3a4150;" title="真实 meituan → 预测 miniprogram: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 meituan → 预测 music: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 meituan → 预测 news: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 meituan → 预测 podcast: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 meituan → 预测 puscene: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 meituan → 预测 retail: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 meituan → 预测 sights: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 meituan → 预测 starbucks: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 meituan → 预测 tc_travel: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 meituan → 预测 travel_plan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 meituan → 预测 video: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 meituan → 预测 __invalid__: 0"></td></tr><tr><th class="rowlab">miniprogram</th><td style="background:rgba(240,90,60,0.152);color:#e6edf3;" title="真实 miniprogram → 预测 car_control: 6">6</td><td style="background:rgba(240,90,60,0.263);color:#e6edf3;" title="真实 miniprogram → 预测 chat: 27">27</td><td style="background:transparent;color:#3a4150;" title="真实 miniprogram → 预测 food: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 miniprogram → 预测 luckin: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 miniprogram → 预测 maoyan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 miniprogram → 预测 meituan: 0"></td><td style="background:rgba(63,185,80,0.930);color:#e6edf3;font-weight:600;" title="真实 miniprogram → 预测 miniprogram: 459">459</td><td style="background:transparent;color:#3a4150;" title="真实 miniprogram → 预测 music: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 miniprogram → 预测 news: 0"></td><td style="background:rgba(240,90,60,0.125);color:#e6edf3;" title="真实 miniprogram → 预测 podcast: 1">1</td><td style="background:transparent;color:#3a4150;" title="真实 miniprogram → 预测 puscene: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 miniprogram → 预测 retail: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 miniprogram → 预测 sights: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 miniprogram → 预测 starbucks: 0"></td><td style="background:rgba(240,90,60,0.157);color:#e6edf3;" title="真实 miniprogram → 预测 tc_travel: 7">7</td><td style="background:transparent;color:#3a4150;" title="真实 miniprogram → 预测 travel_plan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 miniprogram → 预测 video: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 miniprogram → 预测 __invalid__: 0"></td></tr><tr><th class="rowlab">music</th><td style="background:transparent;color:#3a4150;" title="真实 music → 预测 car_control: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 music → 预测 chat: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 music → 预测 food: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 music → 预测 luckin: 0"></td><td style="background:rgba(240,90,60,0.125);color:#e6edf3;" title="真实 music → 预测 maoyan: 1">1</td><td style="background:rgba(240,90,60,0.157);color:#e6edf3;" title="真实 music → 预测 meituan: 7">7</td><td style="background:transparent;color:#3a4150;" title="真实 music → 预测 miniprogram: 0"></td><td style="background:rgba(63,185,80,0.986);color:#e6edf3;font-weight:600;" title="真实 music → 预测 music: 492">492</td><td style="background:transparent;color:#3a4150;" title="真实 music → 预测 news: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 music → 预测 podcast: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 music → 预测 puscene: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 music → 预测 retail: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 music → 预测 sights: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 music → 预测 starbucks: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 music → 预测 tc_travel: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 music → 预测 travel_plan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 music → 预测 video: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 music → 预测 __invalid__: 0"></td></tr><tr><th class="rowlab">news</th><td style="background:rgba(240,90,60,0.146);color:#e6edf3;" title="真实 news → 预测 car_control: 5">5</td><td style="background:rgba(240,90,60,0.152);color:#e6edf3;" title="真实 news → 预测 chat: 6">6</td><td style="background:transparent;color:#3a4150;" title="真实 news → 预测 food: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 news → 预测 luckin: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 news → 预测 maoyan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 news → 预测 meituan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 news → 预测 miniprogram: 0"></td><td style="background:rgba(240,90,60,0.125);color:#e6edf3;" title="真实 news → 预测 music: 1">1</td><td style="background:rgba(63,185,80,0.978);color:#e6edf3;font-weight:600;" title="真实 news → 预测 news: 487">487</td><td style="background:transparent;color:#3a4150;" title="真实 news → 预测 podcast: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 news → 预测 puscene: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 news → 预测 retail: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 news → 预测 sights: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 news → 预测 starbucks: 0"></td><td style="background:rgba(240,90,60,0.125);color:#e6edf3;" title="真实 news → 预测 tc_travel: 1">1</td><td style="background:transparent;color:#3a4150;" title="真实 news → 预测 travel_plan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 news → 预测 video: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 news → 预测 __invalid__: 0"></td></tr><tr><th class="rowlab">podcast</th><td style="background:transparent;color:#3a4150;" title="真实 podcast → 预测 car_control: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 podcast → 预测 chat: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 podcast → 预测 food: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 podcast → 预测 luckin: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 podcast → 预测 maoyan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 podcast → 预测 meituan: 0"></td><td style="background:rgba(240,90,60,0.157);color:#e6edf3;" title="真实 podcast → 预测 miniprogram: 7">7</td><td style="background:rgba(240,90,60,0.231);color:#e6edf3;" title="真实 podcast → 预测 music: 21">21</td><td style="background:rgba(240,90,60,0.125);color:#e6edf3;" title="真实 podcast → 预测 news: 1">1</td><td style="background:rgba(63,185,80,0.944);color:#e6edf3;font-weight:600;" title="真实 podcast → 预测 podcast: 467">467</td><td style="background:transparent;color:#3a4150;" title="真实 podcast → 预测 puscene: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 podcast → 预测 retail: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 podcast → 预测 sights: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 podcast → 预测 starbucks: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 podcast → 预测 tc_travel: 0"></td><td style="background:rgba(240,90,60,0.131);color:#e6edf3;" title="真实 podcast → 预测 travel_plan: 2">2</td><td style="background:rgba(240,90,60,0.131);color:#e6edf3;" title="真实 podcast → 预测 video: 2">2</td><td style="background:transparent;color:#3a4150;" title="真实 podcast → 预测 __invalid__: 0"></td></tr><tr><th class="rowlab">puscene</th><td style="background:transparent;color:#3a4150;" title="真实 puscene → 预测 car_control: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 puscene → 预测 chat: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 puscene → 预测 food: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 puscene → 预测 luckin: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 puscene → 预测 maoyan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 puscene → 预测 meituan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 puscene → 预测 miniprogram: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 puscene → 预测 music: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 puscene → 预测 news: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 puscene → 预测 podcast: 0"></td><td style="background:rgba(63,185,80,1.000);color:#e6edf3;font-weight:600;" title="真实 puscene → 预测 puscene: 500">500</td><td style="background:transparent;color:#3a4150;" title="真实 puscene → 预测 retail: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 puscene → 预测 sights: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 puscene → 预测 starbucks: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 puscene → 预测 tc_travel: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 puscene → 预测 travel_plan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 puscene → 预测 video: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 puscene → 预测 __invalid__: 0"></td></tr><tr><th class="rowlab">retail</th><td style="background:transparent;color:#3a4150;" title="真实 retail → 预测 car_control: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 retail → 预测 chat: 0"></td><td style="background:rgba(240,90,60,0.125);color:#e6edf3;" title="真实 retail → 预测 food: 1">1</td><td style="background:transparent;color:#3a4150;" title="真实 retail → 预测 luckin: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 retail → 预测 maoyan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 retail → 预测 meituan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 retail → 预测 miniprogram: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 retail → 预测 music: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 retail → 预测 news: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 retail → 预测 podcast: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 retail → 预测 puscene: 0"></td><td style="background:rgba(63,185,80,0.917);color:#e6edf3;font-weight:600;" title="真实 retail → 预测 retail: 451">451</td><td style="background:transparent;color:#3a4150;" title="真实 retail → 预测 sights: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 retail → 预测 starbucks: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 retail → 预测 tc_travel: 0"></td><td style="background:rgba(240,90,60,0.373);color:#e6edf3;" title="真实 retail → 预测 travel_plan: 48">48</td><td style="background:transparent;color:#3a4150;" title="真实 retail → 预测 video: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 retail → 预测 __invalid__: 0"></td></tr><tr><th class="rowlab">sights</th><td style="background:transparent;color:#3a4150;" title="真实 sights → 预测 car_control: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 sights → 预测 chat: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 sights → 预测 food: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 sights → 预测 luckin: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 sights → 预测 maoyan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 sights → 预测 meituan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 sights → 预测 miniprogram: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 sights → 预测 music: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 sights → 预测 news: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 sights → 预测 podcast: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 sights → 预测 puscene: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 sights → 预测 retail: 0"></td><td style="background:rgba(63,185,80,0.685);color:#e6edf3;font-weight:600;" title="真实 sights → 预测 sights: 315">315</td><td style="background:transparent;color:#3a4150;" title="真实 sights → 预测 starbucks: 0"></td><td style="background:rgba(240,90,60,0.125);color:#e6edf3;" title="真实 sights → 预测 tc_travel: 1">1</td><td style="background:rgba(240,90,60,1.000);color:#e6edf3;" title="真实 sights → 预测 travel_plan: 184">184</td><td style="background:transparent;color:#3a4150;" title="真实 sights → 预测 video: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 sights → 预测 __invalid__: 0"></td></tr><tr><th class="rowlab">starbucks</th><td style="background:transparent;color:#3a4150;" title="真实 starbucks → 预测 car_control: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 starbucks → 预测 chat: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 starbucks → 预测 food: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 starbucks → 预测 luckin: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 starbucks → 预测 maoyan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 starbucks → 预测 meituan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 starbucks → 预测 miniprogram: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 starbucks → 预测 music: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 starbucks → 预测 news: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 starbucks → 预测 podcast: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 starbucks → 预测 puscene: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 starbucks → 预测 retail: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 starbucks → 预测 sights: 0"></td><td style="background:rgba(63,185,80,1.000);color:#e6edf3;font-weight:600;" title="真实 starbucks → 预测 starbucks: 500">500</td><td style="background:transparent;color:#3a4150;" title="真实 starbucks → 预测 tc_travel: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 starbucks → 预测 travel_plan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 starbucks → 预测 video: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 starbucks → 预测 __invalid__: 0"></td></tr><tr><th class="rowlab">tc_travel</th><td style="background:transparent;color:#3a4150;" title="真实 tc_travel → 预测 car_control: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 tc_travel → 预测 chat: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 tc_travel → 预测 food: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 tc_travel → 预测 luckin: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 tc_travel → 预测 maoyan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 tc_travel → 预测 meituan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 tc_travel → 预测 miniprogram: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 tc_travel → 预测 music: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 tc_travel → 预测 news: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 tc_travel → 预测 podcast: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 tc_travel → 预测 puscene: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 tc_travel → 预测 retail: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 tc_travel → 预测 sights: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 tc_travel → 预测 starbucks: 0"></td><td style="background:rgba(63,185,80,1.000);color:#e6edf3;font-weight:600;" title="真实 tc_travel → 预测 tc_travel: 500">500</td><td style="background:transparent;color:#3a4150;" title="真实 tc_travel → 预测 travel_plan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 tc_travel → 预测 video: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 tc_travel → 预测 __invalid__: 0"></td></tr><tr><th class="rowlab">travel_plan</th><td style="background:transparent;color:#3a4150;" title="真实 travel_plan → 预测 car_control: 0"></td><td style="background:rgba(240,90,60,0.162);color:#e6edf3;" title="真实 travel_plan → 预测 chat: 8">8</td><td style="background:rgba(240,90,60,0.162);color:#e6edf3;" title="真实 travel_plan → 预测 food: 8">8</td><td style="background:transparent;color:#3a4150;" title="真实 travel_plan → 预测 luckin: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 travel_plan → 预测 maoyan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 travel_plan → 预测 meituan: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 travel_plan → 预测 miniprogram: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 travel_plan → 预测 music: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 travel_plan → 预测 news: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 travel_plan → 预测 podcast: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 travel_plan → 预测 puscene: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 travel_plan → 预测 retail: 0"></td><td style="background:rgba(240,90,60,0.146);color:#e6edf3;" title="真实 travel_plan → 预测 sights: 5">5</td><td style="background:transparent;color:#3a4150;" title="真实 travel_plan → 预测 starbucks: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 travel_plan → 预测 tc_travel: 0"></td><td style="background:rgba(63,185,80,0.964);color:#e6edf3;font-weight:600;" title="真实 travel_plan → 预测 travel_plan: 479">479</td><td style="background:transparent;color:#3a4150;" title="真实 travel_plan → 预测 video: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 travel_plan → 预测 __invalid__: 0"></td></tr><tr><th class="rowlab">video</th><td style="background:rgba(240,90,60,0.136);color:#e6edf3;" title="真实 video → 预测 car_control: 3">3</td><td style="background:transparent;color:#3a4150;" title="真实 video → 预测 chat: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 video → 预测 food: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 video → 预测 luckin: 0"></td><td style="background:rgba(240,90,60,0.321);color:#e6edf3;" title="真实 video → 预测 maoyan: 38">38</td><td style="background:transparent;color:#3a4150;" title="真实 video → 预测 meituan: 0"></td><td style="background:rgba(240,90,60,0.131);color:#e6edf3;" title="真实 video → 预测 miniprogram: 2">2</td><td style="background:rgba(240,90,60,0.204);color:#e6edf3;" title="真实 video → 预测 music: 16">16</td><td style="background:transparent;color:#3a4150;" title="真实 video → 预测 news: 0"></td><td style="background:rgba(240,90,60,0.131);color:#e6edf3;" title="真实 video → 预测 podcast: 2">2</td><td style="background:transparent;color:#3a4150;" title="真实 video → 预测 puscene: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 video → 预测 retail: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 video → 预测 sights: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 video → 预测 starbucks: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 video → 预测 tc_travel: 0"></td><td style="background:transparent;color:#3a4150;" title="真实 video → 预测 travel_plan: 0"></td><td style="background:rgba(63,185,80,0.896);color:#e6edf3;font-weight:600;" title="真实 video → 预测 video: 439">439</td><td style="background:transparent;color:#3a4150;" title="真实 video → 预测 __invalid__: 0"></td></tr></tbody>
+      </table>
+    </div>
+  <div class="legend">
+    <span><span class="sw" style="background:rgba(63,185,80,0.8)"></span>正确（对角）</span>
+    <span><span class="sw" style="background:rgba(240,90,60,0.8)"></span>混淆（错误）</span>
+    <span>__invalid__ = 模型未输出合法标签</span>
+  </div>
+
+  <h2>各标签指标（按 F1 升序，&lt;0.85 高亮）</h2>
+  <table class="tbl">
+    <thead><tr><th>标签</th><th>样本数</th><th>Precision</th><th>Recall</th><th>F1</th></tr></thead>
+    <tbody><tr class="weak">
+          <td class="lname">travel_plan</td>
+          <td>500</td>
+          <td><div class="barbg"><div class="bar p" style="width:61.0%"></div><span class="barval">0.610</span></div></td>
+          <td><div class="barbg"><div class="bar r" style="width:95.8%"></div><span class="barval">0.958</span></div></td>
+          <td><div class="barbg"><div class="bar f" style="width:74.6%"></div><span class="barval">0.746</span></div></td>
+        </tr><tr class="weak">
+          <td class="lname">sights</td>
+          <td>500</td>
+          <td><div class="barbg"><div class="bar p" style="width:98.4%"></div><span class="barval">0.984</span></div></td>
+          <td><div class="barbg"><div class="bar r" style="width:63.0%"></div><span class="barval">0.630</span></div></td>
+          <td><div class="barbg"><div class="bar f" style="width:76.8%"></div><span class="barval">0.768</span></div></td>
+        </tr><tr class="weak">
+          <td class="lname">chat</td>
+          <td>500</td>
+          <td><div class="barbg"><div class="bar p" style="width:90.0%"></div><span class="barval">0.900</span></div></td>
+          <td><div class="barbg"><div class="bar r" style="width:74.0%"></div><span class="barval">0.740</span></div></td>
+          <td><div class="barbg"><div class="bar f" style="width:81.2%"></div><span class="barval">0.812</span></div></td>
+        </tr><tr class="">
+          <td class="lname">video</td>
+          <td>500</td>
+          <td><div class="barbg"><div class="bar p" style="width:99.5%"></div><span class="barval">0.995</span></div></td>
+          <td><div class="barbg"><div class="bar r" style="width:87.8%"></div><span class="barval">0.878</span></div></td>
+          <td><div class="barbg"><div class="bar f" style="width:93.3%"></div><span class="barval">0.933</span></div></td>
+        </tr><tr class="">
+          <td class="lname">miniprogram</td>
+          <td>500</td>
+          <td><div class="barbg"><div class="bar p" style="width:98.1%"></div><span class="barval">0.981</span></div></td>
+          <td><div class="barbg"><div class="bar r" style="width:91.8%"></div><span class="barval">0.918</span></div></td>
+          <td><div class="barbg"><div class="bar f" style="width:94.8%"></div><span class="barval">0.948</span></div></td>
+        </tr><tr class="">
+          <td class="lname">retail</td>
+          <td>500</td>
+          <td><div class="barbg"><div class="bar p" style="width:100.0%"></div><span class="barval">1.000</span></div></td>
+          <td><div class="barbg"><div class="bar r" style="width:90.2%"></div><span class="barval">0.902</span></div></td>
+          <td><div class="barbg"><div class="bar f" style="width:94.8%"></div><span class="barval">0.948</span></div></td>
+        </tr><tr class="">
+          <td class="lname">music</td>
+          <td>500</td>
+          <td><div class="barbg"><div class="bar p" style="width:92.8%"></div><span class="barval">0.928</span></div></td>
+          <td><div class="barbg"><div class="bar r" style="width:98.4%"></div><span class="barval">0.984</span></div></td>
+          <td><div class="barbg"><div class="bar f" style="width:95.5%"></div><span class="barval">0.955</span></div></td>
+        </tr><tr class="">
+          <td class="lname">maoyan</td>
+          <td>500</td>
+          <td><div class="barbg"><div class="bar p" style="width:92.7%"></div><span class="barval">0.927</span></div></td>
+          <td><div class="barbg"><div class="bar r" style="width:98.8%"></div><span class="barval">0.988</span></div></td>
+          <td><div class="barbg"><div class="bar f" style="width:95.6%"></div><span class="barval">0.956</span></div></td>
+        </tr><tr class="">
+          <td class="lname">podcast</td>
+          <td>500</td>
+          <td><div class="barbg"><div class="bar p" style="width:98.9%"></div><span class="barval">0.989</span></div></td>
+          <td><div class="barbg"><div class="bar r" style="width:93.4%"></div><span class="barval">0.934</span></div></td>
+          <td><div class="barbg"><div class="bar f" style="width:96.1%"></div><span class="barval">0.961</span></div></td>
+        </tr><tr class="">
+          <td class="lname">car_control</td>
+          <td>500</td>
+          <td><div class="barbg"><div class="bar p" style="width:97.2%"></div><span class="barval">0.972</span></div></td>
+          <td><div class="barbg"><div class="bar r" style="width:95.6%"></div><span class="barval">0.956</span></div></td>
+          <td><div class="barbg"><div class="bar f" style="width:96.4%"></div><span class="barval">0.964</span></div></td>
+        </tr><tr class="">
+          <td class="lname">news</td>
+          <td>500</td>
+          <td><div class="barbg"><div class="bar p" style="width:95.5%"></div><span class="barval">0.955</span></div></td>
+          <td><div class="barbg"><div class="bar r" style="width:97.4%"></div><span class="barval">0.974</span></div></td>
+          <td><div class="barbg"><div class="bar f" style="width:96.4%"></div><span class="barval">0.964</span></div></td>
+        </tr><tr class="">
+          <td class="lname">tc_travel</td>
+          <td>500</td>
+          <td><div class="barbg"><div class="bar p" style="width:96.5%"></div><span class="barval">0.965</span></div></td>
+          <td><div class="barbg"><div class="bar r" style="width:100.0%"></div><span class="barval">1.000</span></div></td>
+          <td><div class="barbg"><div class="bar f" style="width:98.2%"></div><span class="barval">0.982</span></div></td>
+        </tr><tr class="">
+          <td class="lname">food</td>
+          <td>500</td>
+          <td><div class="barbg"><div class="bar p" style="width:98.2%"></div><span class="barval">0.982</span></div></td>
+          <td><div class="barbg"><div class="bar r" style="width:99.2%"></div><span class="barval">0.992</span></div></td>
+          <td><div class="barbg"><div class="bar f" style="width:98.7%"></div><span class="barval">0.987</span></div></td>
+        </tr><tr class="">
+          <td class="lname">meituan</td>
+          <td>500</td>
+          <td><div class="barbg"><div class="bar p" style="width:97.5%"></div><span class="barval">0.975</span></div></td>
+          <td><div class="barbg"><div class="bar r" style="width:100.0%"></div><span class="barval">1.000</span></div></td>
+          <td><div class="barbg"><div class="bar f" style="width:98.7%"></div><span class="barval">0.987</span></div></td>
+        </tr><tr class="">
+          <td class="lname">luckin</td>
+          <td>500</td>
+          <td><div class="barbg"><div class="bar p" style="width:100.0%"></div><span class="barval">1.000</span></div></td>
+          <td><div class="barbg"><div class="bar r" style="width:100.0%"></div><span class="barval">1.000</span></div></td>
+          <td><div class="barbg"><div class="bar f" style="width:100.0%"></div><span class="barval">1.000</span></div></td>
+        </tr><tr class="">
+          <td class="lname">puscene</td>
+          <td>500</td>
+          <td><div class="barbg"><div class="bar p" style="width:100.0%"></div><span class="barval">1.000</span></div></td>
+          <td><div class="barbg"><div class="bar r" style="width:100.0%"></div><span class="barval">1.000</span></div></td>
+          <td><div class="barbg"><div class="bar f" style="width:100.0%"></div><span class="barval">1.000</span></div></td>
+        </tr><tr class="">
+          <td class="lname">starbucks</td>
+          <td>500</td>
+          <td><div class="barbg"><div class="bar p" style="width:100.0%"></div><span class="barval">1.000</span></div></td>
+          <td><div class="barbg"><div class="bar r" style="width:100.0%"></div><span class="barval">1.000</span></div></td>
+          <td><div class="barbg"><div class="bar f" style="width:100.0%"></div><span class="barval">1.000</span></div></td>
+        </tr></tbody>
+  </table>
+
+  <div class="two">
+    <div>
+      <h2>Top 混淆对</h2>
+      <table class="tbl">
+        <thead><tr><th>真实</th><th></th><th>预测</th><th>数量</th></tr></thead>
+        <tbody><tr>
+          <td class="lname">sights</td>
+          <td class="arrow">→</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="pairbar"><div class="barbg"><div class="bar c" style="width:100.0%"></div><span class="barval">184</span></div></td>
+        </tr><tr>
+          <td class="lname">chat</td>
+          <td class="arrow">→</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="pairbar"><div class="barbg"><div class="bar c" style="width:38.0%"></div><span class="barval">70</span></div></td>
+        </tr><tr>
+          <td class="lname">chat</td>
+          <td class="arrow">→</td>
+          <td class="lname pred">__invalid__</td>
+          <td class="pairbar"><div class="barbg"><div class="bar c" style="width:27.7%"></div><span class="barval">51</span></div></td>
+        </tr><tr>
+          <td class="lname">retail</td>
+          <td class="arrow">→</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="pairbar"><div class="barbg"><div class="bar c" style="width:26.1%"></div><span class="barval">48</span></div></td>
+        </tr><tr>
+          <td class="lname">video</td>
+          <td class="arrow">→</td>
+          <td class="lname pred">maoyan</td>
+          <td class="pairbar"><div class="barbg"><div class="bar c" style="width:20.7%"></div><span class="barval">38</span></div></td>
+        </tr><tr>
+          <td class="lname">miniprogram</td>
+          <td class="arrow">→</td>
+          <td class="lname pred">chat</td>
+          <td class="pairbar"><div class="barbg"><div class="bar c" style="width:14.7%"></div><span class="barval">27</span></div></td>
+        </tr><tr>
+          <td class="lname">car_control</td>
+          <td class="arrow">→</td>
+          <td class="lname pred">news</td>
+          <td class="pairbar"><div class="barbg"><div class="bar c" style="width:12.0%"></div><span class="barval">22</span></div></td>
+        </tr><tr>
+          <td class="lname">podcast</td>
+          <td class="arrow">→</td>
+          <td class="lname pred">music</td>
+          <td class="pairbar"><div class="barbg"><div class="bar c" style="width:11.4%"></div><span class="barval">21</span></div></td>
+        </tr><tr>
+          <td class="lname">video</td>
+          <td class="arrow">→</td>
+          <td class="lname pred">music</td>
+          <td class="pairbar"><div class="barbg"><div class="bar c" style="width:8.7%"></div><span class="barval">16</span></div></td>
+        </tr><tr>
+          <td class="lname">travel_plan</td>
+          <td class="arrow">→</td>
+          <td class="lname pred">chat</td>
+          <td class="pairbar"><div class="barbg"><div class="bar c" style="width:4.3%"></div><span class="barval">8</span></div></td>
+        </tr><tr>
+          <td class="lname">travel_plan</td>
+          <td class="arrow">→</td>
+          <td class="lname pred">food</td>
+          <td class="pairbar"><div class="barbg"><div class="bar c" style="width:4.3%"></div><span class="barval">8</span></div></td>
+        </tr><tr>
+          <td class="lname">miniprogram</td>
+          <td class="arrow">→</td>
+          <td class="lname pred">tc_travel</td>
+          <td class="pairbar"><div class="barbg"><div class="bar c" style="width:3.8%"></div><span class="barval">7</span></div></td>
+        </tr><tr>
+          <td class="lname">music</td>
+          <td class="arrow">→</td>
+          <td class="lname pred">meituan</td>
+          <td class="pairbar"><div class="barbg"><div class="bar c" style="width:3.8%"></div><span class="barval">7</span></div></td>
+        </tr><tr>
+          <td class="lname">podcast</td>
+          <td class="arrow">→</td>
+          <td class="lname pred">miniprogram</td>
+          <td class="pairbar"><div class="barbg"><div class="bar c" style="width:3.8%"></div><span class="barval">7</span></div></td>
+        </tr><tr>
+          <td class="lname">maoyan</td>
+          <td class="arrow">→</td>
+          <td class="lname pred">tc_travel</td>
+          <td class="pairbar"><div class="barbg"><div class="bar c" style="width:3.3%"></div><span class="barval">6</span></div></td>
+        </tr><tr>
+          <td class="lname">miniprogram</td>
+          <td class="arrow">→</td>
+          <td class="lname pred">car_control</td>
+          <td class="pairbar"><div class="barbg"><div class="bar c" style="width:3.3%"></div><span class="barval">6</span></div></td>
+        </tr><tr>
+          <td class="lname">news</td>
+          <td class="arrow">→</td>
+          <td class="lname pred">chat</td>
+          <td class="pairbar"><div class="barbg"><div class="bar c" style="width:3.3%"></div><span class="barval">6</span></div></td>
+        </tr><tr>
+          <td class="lname">chat</td>
+          <td class="arrow">→</td>
+          <td class="lname pred">meituan</td>
+          <td class="pairbar"><div class="barbg"><div class="bar c" style="width:2.7%"></div><span class="barval">5</span></div></td>
+        </tr><tr>
+          <td class="lname">news</td>
+          <td class="arrow">→</td>
+          <td class="lname pred">car_control</td>
+          <td class="pairbar"><div class="barbg"><div class="bar c" style="width:2.7%"></div><span class="barval">5</span></div></td>
+        </tr><tr>
+          <td class="lname">travel_plan</td>
+          <td class="arrow">→</td>
+          <td class="lname pred">sights</td>
+          <td class="pairbar"><div class="barbg"><div class="bar c" style="width:2.7%"></div><span class="barval">5</span></div></td>
+        </tr></tbody>
+      </table>
+    </div>
+    <div>
+      <h2>错误样例（前 40 / 共 573 条）</h2>
+      <table class="tbl">
+        <thead><tr><th>#</th><th>真实</th><th>预测</th><th>query</th></tr></thead>
+        <tbody><tr>
+          <td>504</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的麦当劳来香骨鸡</td>
+        </tr><tr>
+          <td>507</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的肯德基来全家桶</td>
+        </tr><tr>
+          <td>512</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的麦当劳来麦旋风</td>
+        </tr><tr>
+          <td>522</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的肯德基来脆皮鸡</td>
+        </tr><tr>
+          <td>533</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的肯德基来儿童套餐</td>
+        </tr><tr>
+          <td>544</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的k记来新奥尔良烤鸡腿堡</td>
+        </tr><tr>
+          <td>554</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的肯德基来双层吉士堡</td>
+        </tr><tr>
+          <td>557</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的金拱门来麦乐鸡块</td>
+        </tr><tr>
+          <td>563</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的麦记来脆皮鸡</td>
+        </tr><tr>
+          <td>571</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的麦当劳来麦乐鸡块</td>
+        </tr><tr>
+          <td>574</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的k记来全家桶</td>
+        </tr><tr>
+          <td>585</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的麦当劳来麦满分</td>
+        </tr><tr>
+          <td>592</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的肯德基来麦乐鸡块</td>
+        </tr><tr>
+          <td>602</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的金拱门来薯条</td>
+        </tr><tr>
+          <td>608</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的疯狂星期四来麦旋风</td>
+        </tr><tr>
+          <td>609</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的金拱门来麦旋风</td>
+        </tr><tr>
+          <td>634</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的肯德基来葡式蛋挞</td>
+        </tr><tr>
+          <td>643</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的疯狂星期四来板烧鸡腿堡</td>
+        </tr><tr>
+          <td>663</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">food</td>
+          <td class="q">金拱门滨海大厦旁，奥尔良烤翅和可乐</td>
+        </tr><tr>
+          <td>681</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的肯德基来奥尔良烤翅</td>
+        </tr><tr>
+          <td>688</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的疯狂星期四来薯条</td>
+        </tr><tr>
+          <td>691</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的k记来板烧鸡腿堡</td>
+        </tr><tr>
+          <td>694</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的麦当劳来吮指原味鸡</td>
+        </tr><tr>
+          <td>715</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的肯德基来吮指原味鸡</td>
+        </tr><tr>
+          <td>724</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的肯德基来蛋卷冰淇淋</td>
+        </tr><tr>
+          <td>728</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的肯德基来劲脆鸡腿堡</td>
+        </tr><tr>
+          <td>730</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的麦记来原味鸡块</td>
+        </tr><tr>
+          <td>733</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的麦记来麦辣鸡腿堡</td>
+        </tr><tr>
+          <td>746</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的麦当劳来那么大鸡排</td>
+        </tr><tr>
+          <td>773</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的麦记来葡式蛋挞</td>
+        </tr><tr>
+          <td>780</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的肯德基来原味鸡块</td>
+        </tr><tr>
+          <td>788</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的k记来脆皮鸡</td>
+        </tr><tr>
+          <td>803</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的肯德基来麦辣鸡腿堡</td>
+        </tr><tr>
+          <td>829</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的肯德基来草莓圣代</td>
+        </tr><tr>
+          <td>830</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的肯德基来那么大鸡排</td>
+        </tr><tr>
+          <td>847</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的疯狂星期四来蛋卷冰淇淋</td>
+        </tr><tr>
+          <td>870</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的麦记来薯条</td>
+        </tr><tr>
+          <td>877</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的疯狂星期四来儿童套餐</td>
+        </tr><tr>
+          <td>898</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的麦当劳来香辣鸡翅</td>
+        </tr><tr>
+          <td>900</td>
+          <td class="lname">retail</td>
+          <td class="lname pred">travel_plan</td>
+          <td class="q">去常去的疯狂星期四来香骨鸡</td>
+        </tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</body>
+</html>
