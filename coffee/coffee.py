@@ -253,12 +253,12 @@ def main():
     parser = argparse.ArgumentParser(description="将 coffee.xlsx 转换为 OpenAI 训练样本 jsonl 格式（meituan / luckin / starbucks / clarify / whatever / terminate / other 七分类）")
     parser.add_argument(
         "--input", "-i",
-        default="/Users/rwardzhang/PycharmProjects/master_agent_qc/coffee/coffee_order_0728.xlsx",
+        default="/Users/rwardzhang/PycharmProjects/master_agent_qc/coffee/coffee_order.xlsx",
         help="输入的 xlsx 文件路径"
     )
     parser.add_argument(
         "--output", "-o",
-        default="/Users/rwardzhang/PycharmProjects/master_agent_qc/coffee/coffee_order_0728.jsonl",
+        default="/Users/rwardzhang/PycharmProjects/master_agent_qc/coffee/coffee_order_1124.jsonl",
         help="输出的 jsonl 文件路径"
     )
     args = parser.parse_args()

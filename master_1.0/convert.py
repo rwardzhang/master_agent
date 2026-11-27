@@ -251,12 +251,12 @@ def main():
     parser = argparse.ArgumentParser(description="将 MA_1.0_train.xlsx 转换为 OpenAI 训练样本 jsonl 格式")
     parser.add_argument(
         "--input", "-i",
-        default="/Users/rwardzhang/PycharmProjects/master_agent_qc/master_1.0/MA_1.0_train_0730.xlsx",
+        default="/Users/rwardzhang/PycharmProjects/master_agent_qc/master_1.0/MA_1.0_train_1125.xlsx",
         help="输入的 xlsx 文件路径"
     )
     parser.add_argument(
         "--output", "-o",
-        default="/Users/rwardzhang/PycharmProjects/master_agent_qc/master_1.0/zc_model_1.0_v35.jsonl",
+        default="/Users/rwardzhang/PycharmProjects/master_agent_qc/master_1.0/zc_model_1.0_v40.jsonl",
         help="输出的 jsonl 文件路径"
     )
     args = parser.parse_args()
